@@ -33,10 +33,28 @@ def main():
     gs = ChessEngine.GameState()
     loadImages()  # only done once before while loop
     running = True
+    sqSelected = () # no square selected initially, track last user click (tuple: (row,col))
+    playerClicks = [] # track player clicks (two tuples: [(6, 4), (4, 4)])
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos() # (x, y) location of mouse
+                col = location[0]//SQ_SIZE
+                row = location[1]//SQ_SIZE
+                if sqSelected == (row,col): # user clicked same sq twice
+                    sqSelected = () # deselect
+                    playerClicks = [] # clear player clicks
+                else:
+                    sqSelected = (row, col)
+                    playerClicks.append(sqSelected)
+                if len(playerClicks) == 2: # after second click
+                    move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
+                    print(move.getChessNotation())
+                    gs.makeMove(move)
+                    sqSelected = () # reset user click
+                    playerClicks = []
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
@@ -55,7 +73,7 @@ def drawGameState(screen, gs):
 Draw squares on the board, the top left is always light.
 """
 def drawBoard(screen):
-    colors = [p.Color("white"), p.Color("brown")]
+    colors = [p.Color("white"), p.Color("light gray")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[((r + c) % 2)]
@@ -71,6 +89,11 @@ def drawPieces(screen, board):
             piece = board[r][c]
             if piece != "--":  # non empty square
                 screen.blit(IMAGES[piece], p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+
+
+
+
 
 
 if __name__ == "__main__":
